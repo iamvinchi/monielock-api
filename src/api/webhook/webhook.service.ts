@@ -21,7 +21,7 @@ export class WebhookService {
             const event  = body.event
             const trns = await this.transactionModel.findOne({ transactionReference: body.data.reference }).populate<{ wallet: any }>('wallet').exec()
 
-            if (event.event === 'charge.success') {
+            if (event === 'charge.success') {
                 const totalAmount = (Number(body.data.amount) / 100)
     
                 const newBal = Number(trns?.wallet?.balance) + Number(totalAmount)
@@ -38,7 +38,7 @@ export class WebhookService {
                     trns._id,
                     {
                         $set: {
-                            status: 'success'
+                            status: event.split('.')[1]
                         }
                     },
                     { new: true }
