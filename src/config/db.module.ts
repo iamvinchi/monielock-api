@@ -1,12 +1,24 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
-const db_url = 'mongodb://localhost:27017/monielock'
-
-// const db_url = process.env.NODE_ENV === 'development' ? 'mongodb://localhost:27017/nest' : 'mongodb+srv://username:password@cluster0.example.mongodb.net/nest?retryWrites=true&w=majority'
 @Module({
   imports: [
-    MongooseModule.forRoot(db_url)
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+    }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('DB_URL'),
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        retryAttempts: 5,
+        retryDelay: 1000,
+      }),
+      inject: [ConfigService],
+    }),
   ],
 })
 export class DBModule {}
