@@ -6,7 +6,7 @@ export type BankDocument = Bank & Document;
 @Schema()
 export class Bank {
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   bankCode: string;
 
   @Prop({ required: true })

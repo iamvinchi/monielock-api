@@ -10,7 +10,6 @@ import { UserModule } from './api/user/user.module';
 import { WebhookModule } from './api/webhook/webhook.module';
 import { JwtStrategy } from './utils/jwt/jwt.strategy';
 import { TransactionsModule } from './api/transactions/transactions.module';
-import { NameTagModule } from './api/name-tag/name-tag.module';
 
 @Module({
   imports: [
@@ -36,7 +35,6 @@ import { NameTagModule } from './api/name-tag/name-tag.module';
     UserModule,
     WebhookModule,
     TransactionsModule,
-    NameTagModule
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],

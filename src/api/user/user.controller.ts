@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Request, Response } 
 import { ApiTags } from '@nestjs/swagger';
 import { UseAuthGuard } from 'src/utils/jwt/useAuth.guard';
 import { UserService } from './user.service';
-import { AddBankDto, CreateKycDto, FundWalletDto, ResetPinDto, UpdateBankDto, WalletWithdrawDto } from './dto/user.dto';
+import { AddBankDto, CreateKycDto, FundWalletDto, ResetPinDto, TagDto, UpdateBankDto, WalletWithdrawDto } from './dto/user.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -79,6 +79,25 @@ export class UserController {
     @UseAuthGuard()
     walletWithdraw(@Param('id') id: string, @Body() withdraw: WalletWithdrawDto) {
       return this.userService.walletWithdraw(id,withdraw);
+    }
+
+    @Post('tag')
+    @UseAuthGuard()
+    createNameTag(@Request() req:any,  @Body() tagDto: TagDto) {
+        const id = req.user.sub
+      return this.userService.createNameTag(id,tagDto);
+    }
+
+    @Get('tag')
+    @UseAuthGuard()
+    getNameTag(@Request() req:any) {
+        const id = req.user.sub
+      return this.userService.getNameTag(id);
+    }
+
+    @Patch('tage/validate')
+    validateNameTag(@Body() tagDto: TagDto) {
+      return this.userService.validateNameTag(tagDto);
     }
     
 }

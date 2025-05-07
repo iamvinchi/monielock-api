@@ -8,6 +8,7 @@ import { Wallet, WalletSchema } from './shemas/wallet.schema';
 import { User, UserSchema } from './shemas/user.schema';
 import { Auth, AuthSchema } from '../auth/schemas/auth.schema';
 import { Transactions, TransactionsSchema } from '../transactions/schemas/transactions.schema';
+import { NameTag, NameTagSchema } from './shemas/name-tag.schema';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { Transactions, TransactionsSchema } from '../transactions/schemas/transa
       {name:Wallet.name,schema:WalletSchema},
       { name: Bank.name, schema: BankSchema }, 
       {name:Pin.name,schema:PinSchema},
-      {name:Transactions.name, schema:TransactionsSchema}
+      {name:Transactions.name, schema:TransactionsSchema},
+      {name:NameTag.name, schema:NameTagSchema}
     ]),
   ],
   providers: [UserService],

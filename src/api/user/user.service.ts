@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import axios from "axios"
 import { error, success } from 'src/utils/response.utils';
-import { AddBankDto, CreateKycDto, FundWalletDto, ResetPinDto, UpdateBankDto, WalletWithdrawDto } from './dto/user.dto';
+import { AddBankDto, CreateKycDto, FundWalletDto, ResetPinDto, TagDto, UpdateBankDto, WalletWithdrawDto } from './dto/user.dto';
 import { LoginDto } from '../auth/dto/auth.dto';
 import { User, UserDocument } from './shemas/user.schema';
 import { Wallet, WalletDocument } from './shemas/wallet.schema';
@@ -12,6 +12,7 @@ import { Pin, PinDocument } from './shemas/pin.schema';
 import { createRecipient, generateReference, getAllBanks, initiateTransfer, validateBankAccount } from 'src/utils/helper.services/paystack.service';
 import { Auth, AuthDocument } from '../auth/schemas/auth.schema';
 import { Transactions, TransactionsDocument } from '../transactions/schemas/transactions.schema';
+import { NameTag, NameTagDocument } from './shemas/name-tag.schema';
 
 
 @Injectable()
@@ -23,6 +24,7 @@ export class UserService {
         @InjectModel(Bank.name) private bankModel: Model<BankDocument>,
         @InjectModel(Pin.name) private pinModel: Model<PinDocument>,
         @InjectModel(Transactions.name) private transactionsModel: Model<TransactionsDocument>,
+        @InjectModel(NameTag.name) private nameTagModel: Model<NameTagDocument>,
       ) {}
 
       async userKyc(id:string, createKycDto: CreateKycDto){
@@ -335,5 +337,91 @@ export class UserService {
             `${err.response?.data?.message || err.message}`,
           );
         }
+      }
+
+
+      async createNameTag(id:string, tagDto: TagDto){
+        try {
+          const {tag} = tagDto
+          const existingTag = await this.nameTagModel.findOne({auth: id})
+          if(existingTag){
+              return error(
+                  'Tag',
+                  `User name tag already exist.`,
+                );
+          }
+     const user = await this.userModel.findOne({auth: new Types.ObjectId(id)})
+
+  const createdTag = await this.nameTagModel.create({
+      tag: tag.toLowerCase(),
+      user: user ? user._id : null,
+      auth:id
+    });
+        return success( 
+          {
+              success: true,
+              tag: createdTag
+          },
+          'Tag',
+          'Tag successfully created.',
+        );
+      } catch (err) {
+        return error(
+          'Tag',
+          `${err}`,
+        );
+      }
+      }
+
+      async getNameTag(id:string){
+        try {
+          const tag = await this.nameTagModel.findOne({auth: id}).populate<{user: User}>("user").populate<{auth: Auth}>("auth").exec()
+          if(!tag){
+              return error(
+                  'Tag',
+                  `User name tag not found.`,
+                );
+          }
+
+        return success( 
+          {
+              success: true,
+              tag
+          },
+          'Tag',
+          'Tag successfully retrieved.',
+        );
+      } catch (err) {
+        return error(
+          'Tag',
+          `${err}`,
+        );
+      }
+      }
+
+      async validateNameTag(tagDto: TagDto){
+        try {
+          const tags = await this.nameTagModel.find({tag: tagDto.tag.toLowerCase()})
+          if(tags?.length){
+              return error(
+                  'Tag',
+                  `Tag not available.`,
+                );
+          }
+
+        return success( 
+          {
+              success: true,
+              tag: tagDto.tag
+          },
+          'Tag',
+          'Tag available.',
+        );
+      } catch (err) {
+        return error(
+          'Tag',
+          `${err}`,
+        );
+      }
       }
 }

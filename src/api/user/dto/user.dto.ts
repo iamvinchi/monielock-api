@@ -90,3 +90,9 @@ export class AddBankDto {
     @ApiPropertyOptional()
     reason: string;
   }
+
+  export class TagDto{
+    @IsNotEmpty({ message: 'tag can not be empty' })
+    @ApiProperty()
+    tag: string;
+  }
