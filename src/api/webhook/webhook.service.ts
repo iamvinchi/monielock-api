@@ -15,24 +15,51 @@ export class WebhookService {
     ) { }
 
     async creditWallet(req: any, res: any) {
-        try {
-            console.log({ res })
-            console.log({ req })
+      
             const { body } = req
-            console.log({ body })
-            return success(
-                {
-                    body
-                },
-                'Webhook',
-                'Wallet credited',
-            );
-        } catch (err) {
-            return error(
-                'Webhook',
-                `${err}`,
-            );
-        }
+
+            const event  = body.event
+            const trns = await this.transactionModel.findOne({ transactionReference: body.data.reference }).populate<{ wallet: any }>('wallet').exec()
+
+            if (event.event === 'charge.success') {
+                const totalAmount = (Number(body.data.amount) / 100)
+    
+                const newBal = Number(trns?.wallet?.balance) + Number(totalAmount)
+                await this.walletModel.findByIdAndUpdate(
+                    trns?.wallet?._id,
+                    {
+                        $set: {
+                            balance: newBal
+                        }
+                    },
+                    { new: true }
+                );
+                return await this.transactionModel.findByIdAndUpdate(
+                    trns._id,
+                    {
+                        $set: {
+                            status: 'success'
+                        }
+                    },
+                    { new: true }
+                );
+    
+            }
+            else {
+                await this.transactionModel.findByIdAndUpdate(
+                    trns._id,
+                    {
+                        $set: {
+                            status: 'failed'
+                        }
+                    },
+                    { new: true }
+                );
+            }
+
+            res.status(200).send('Webhook received');
+            
+        
     }
 
     async withdrawal(req: any, res: any) {
