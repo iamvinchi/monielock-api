@@ -9,6 +9,7 @@ import { User, UserSchema } from './shemas/user.schema';
 import { Auth, AuthSchema } from '../auth/schemas/auth.schema';
 import { Transactions, TransactionsSchema } from '../transactions/schemas/transactions.schema';
 import { NameTag, NameTagSchema } from './shemas/name-tag.schema';
+import { EmailService } from 'src/utils/helper.services/email.service';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { NameTag, NameTagSchema } from './shemas/name-tag.schema';
       {name:NameTag.name, schema:NameTagSchema}
     ]),
   ],
-  providers: [UserService],
+  providers: [UserService, EmailService],
   controllers: [UserController]
 })
 export class UserModule {}

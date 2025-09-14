@@ -1,8 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request, Response } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, Response } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UseAuthGuard } from 'src/utils/jwt/useAuth.guard';
 import { UserService } from './user.service';
-import { AddBankDto, CreateKycDto, FundWalletDto, ResetPinDto, TagDto, UpdateBankDto, WalletWithdrawDto } from './dto/user.dto';
+import { AddBankDto, CreateKycDto, FundWalletDto, InviteDto, ResetPinDto, TagDto, UpdateBankDto, WalletWithdrawDto } from './dto/user.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -71,8 +71,14 @@ export class UserController {
 
     @Patch('wallet/:id/fund')
     @UseAuthGuard()
-    fundWallet(@Param('id') id: string, @Body() fundWallet: FundWalletDto) {
-      return this.userService.fundWallet(id,fundWallet);
+    fundWallet(@Param('id') id: string) {
+      return this.userService.fundWallet(id);
+    }
+
+    @Get('wallet/verify/:id/:referenceKey')
+    @UseAuthGuard()
+    verifyTransaction(@Param('id') id: string, @Param('referenceKey') referenceKey:string) {
+      return this.userService.verifyTransaction(id,referenceKey);
     }
 
     @Patch('wallet/:id/withdraw')
@@ -98,6 +104,18 @@ export class UserController {
     @Patch('tage/validate')
     validateNameTag(@Body() tagDto: TagDto) {
       return this.userService.validateNameTag(tagDto);
+    }
+
+    @Patch('tage/verify')
+    verifyNameTag(@Body() tagDto: TagDto) {
+      return this.userService.verifyNameTag(tagDto);
+    }
+
+    @Post('invite')
+    @UseAuthGuard()
+    sendInvite(@Request() req:any, @Body() inviteDto: InviteDto) {
+      const id = req.user.sub
+      return this.userService.sendInvite(id, inviteDto);
     }
     
 }
