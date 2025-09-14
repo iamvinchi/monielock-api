@@ -18,11 +18,12 @@ export const getTemplate = async (template: any, data = {}, opts: any) => {
       }
     const selection: any = {
         welcome: fs.readFileSync(path.join(process.cwd(),'/src/utils/email-template/emails/welcome.ejs' )).toString(),
+        invite: fs.readFileSync(path.join(process.cwd(),'/src/utils/email-template/emails/invite.ejs' )).toString(),
         resendCode: fs.readFileSync(path.join(process.cwd(),'/src/utils/email-template/emails/resend-code.ejs' )).toString(),
         forgotPassword: fs.readFileSync(path.join(process.cwd(),'/src/utils/email-template/emails/forgot-password.ejs' )).toString(),
         confirmPasswordReset: fs.readFileSync(path.join(process.cwd(),'/src/utils/email-template/emails/password-reset-confirmation.ejs' )).toString()
     };
-    const acceptedType = ['welcome', 'resendCode', 'forgotPassword', 'confirmPasswordReset'];
+    const acceptedType = ['welcome', 'invite', 'resendCode', 'forgotPassword', 'confirmPasswordReset'];
     if (!acceptedType.includes(template))
         throw new Error(`Unknown email template type expected one of ${acceptedType} but got ${template}`)
 

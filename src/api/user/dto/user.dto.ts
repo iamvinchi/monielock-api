@@ -65,9 +65,9 @@ export class AddBankDto {
   }
 
   export class FundWalletDto {
-    @IsNotEmpty({ message: 'Amount can not be empty' })
+    @IsNotEmpty({ message: 'reference key can not be empty' })
     @ApiProperty()
-    amount: string;
+    referenceKey: string;
   }
 
   export class WalletWithdrawDto {
@@ -95,4 +95,10 @@ export class AddBankDto {
     @IsNotEmpty({ message: 'tag can not be empty' })
     @ApiProperty()
     tag: string;
+  }
+
+  export class InviteDto{
+    @IsNotEmpty({ message: 'Email can not be empty' })
+    @ApiProperty()
+    email: string;
   }

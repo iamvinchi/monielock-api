@@ -10,6 +10,7 @@ import { UserModule } from './api/user/user.module';
 import { WebhookModule } from './api/webhook/webhook.module';
 import { JwtStrategy } from './utils/jwt/jwt.strategy';
 import { TransactionsModule } from './api/transactions/transactions.module';
+import { TradeModule } from './api/trade/trade.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { TransactionsModule } from './api/transactions/transactions.module';
     UserModule,
     WebhookModule,
     TransactionsModule,
+    TradeModule
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],
