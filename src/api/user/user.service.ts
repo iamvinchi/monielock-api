@@ -1,23 +1,46 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import axios from "axios"
+import axios from 'axios';
 import { error, success } from 'src/utils/response.utils';
-import { AddBankDto, CreateKycDto, FundWalletDto, InviteDto, ResetPinDto, TagDto, UpdateBankDto, WalletWithdrawDto } from './dto/user.dto';
+import {
+  AddBankDto,
+  CreateKycDto,
+  FundWalletDto,
+  InviteDto,
+  ResetPinDto,
+  TagDto,
+  UpdateBankDto,
+  WalletWithdrawDto,
+} from './dto/user.dto';
 import { LoginDto } from '../auth/dto/auth.dto';
 import { User, UserDocument } from './shemas/user.schema';
 import { Wallet, WalletDocument } from './shemas/wallet.schema';
 import { Bank, BankDocument } from './shemas/bank.schema';
 import { Pin, PinDocument } from './shemas/pin.schema';
-import { createRecipient, generateReference, getAllBanks, initiateTransfer, validateBankAccount } from 'src/utils/helper.services/paystack.service';
+import {
+  createRecipient,
+  generateReference,
+  getAllBanks,
+  initiateTransfer,
+  validateBankAccount,
+} from 'src/utils/helper.services/paystack.service';
 import { Auth, AuthDocument } from '../auth/schemas/auth.schema';
-import { Transactions, TransactionsDocument } from '../transactions/schemas/transactions.schema';
+import {
+  Transactions,
+  TransactionsDocument,
+} from '../transactions/schemas/transactions.schema';
 import { NameTag, NameTagDocument } from './shemas/name-tag.schema';
 import { randomAlphanumeric, randomDigits } from 'src/utils/common.util';
 import { hash } from 'src/utils/security.utils';
 import { getTemplate } from 'src/utils/get-templates';
 import { EmailService } from 'src/utils/helper.services/email.service';
-
 
 @Injectable()
 export class UserService {
@@ -27,280 +50,247 @@ export class UserService {
     @InjectModel(Wallet.name) private walletModel: Model<WalletDocument>,
     @InjectModel(Bank.name) private bankModel: Model<BankDocument>,
     @InjectModel(Pin.name) private pinModel: Model<PinDocument>,
-    @InjectModel(Transactions.name) private transactionsModel: Model<TransactionsDocument>,
+    @InjectModel(Transactions.name)
+    private transactionsModel: Model<TransactionsDocument>,
     @InjectModel(NameTag.name) private nameTagModel: Model<NameTagDocument>,
     private readonly emailService: EmailService,
-  ) { }
+  ) {}
 
   async userKyc(id: string, createKycDto: CreateKycDto) {
     try {
-      const { fullName, address, bankCode, accountName, accountNumber, pin } = createKycDto
-      const response = await validateBankAccount({ bankCode, accountName, accountNumber })
+      const { fullName, address, bankCode, accountName, accountNumber, pin } =
+        createKycDto;
+      const response = await validateBankAccount({
+        bankCode,
+        accountName,
+        accountNumber,
+      });
 
       if (response.status !== true) {
-        return error(
-          'User KYC error',
-          `${response.message}`,
-        );
+        throw new UnprocessableEntityException(response.message);
       }
 
-      const auth = await this.authModel.findById(id)
+      const auth = await this.authModel.findById(id);
 
       const user = await this.userModel.create({
-        fullName, address, auth: auth._id
-      })
+        fullName,
+        address,
+        auth: auth._id,
+      });
 
       const bank = await this.bankModel.create({
-        bankCode, accountName, accountNumber, owner: auth._id
-      })
+        bankCode,
+        accountName,
+        accountNumber,
+        owner: auth._id,
+      });
 
       const newPin = await this.pinModel.create({
-        pin, owner: auth._id
-      })
+        pin,
+        owner: auth._id,
+      });
 
       return success(
         {
-          user, bank, newPin
+          user,
+          bank,
+          newPin,
         },
         'KYC',
         'User KYC successfully',
       );
     } catch (err) {
-      return error(
-        'User KYC error',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async profile(id: string) {
     try {
-
-      return success(
-        {
-
-        },
-        'Login',
-        'User successfully logged in',
-      );
+      return success({}, 'Login', 'User successfully logged in');
     } catch (err) {
-      return error(
-        'Login',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async AddBank(id: string, addBankDto: AddBankDto) {
     try {
-      const { bankCode, accountName, accountNumber } = addBankDto
-      const response = await validateBankAccount({ bankCode, accountName, accountNumber })
+      const { bankCode, accountName, accountNumber } = addBankDto;
+      const response = await validateBankAccount({
+        bankCode,
+        accountName,
+        accountNumber,
+      });
 
       if (response.status !== true) {
-        return error(
-          'Add bank',
-          `${response.message}`,
-        );
+        throw new UnprocessableEntityException(response.message);
       }
-      const auth = await this.authModel.findById(id)
+      const auth = await this.authModel.findById(id);
 
       const bank = await this.bankModel.create({
-        bankCode, accountName, accountNumber, owner: auth._id
-      })
+        bankCode,
+        accountName,
+        accountNumber,
+        owner: auth._id,
+      });
       return success(
         {
-          bank
+          bank,
         },
         'Add bank',
         'Bank successfully added',
       );
     } catch (err) {
-      return error(
-        'Add bank',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async getUserBanks(id: string) {
     try {
-      const banks = await this.bankModel.find({ owner: new Types.ObjectId(id) })
+      const banks = await this.bankModel.find({
+        owner: new Types.ObjectId(id),
+      });
       return success(
         {
-          banks
+          banks,
         },
         'User banks',
         'User banks successfully retrieved.',
       );
     } catch (err) {
-      return error(
-        'User banks',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async getSingleBank(id: string) {
     try {
-      const bank = await this.bankModel.findById(id) || null
+      const bank = (await this.bankModel.findById(id)) || null;
       return success(
         {
-          bank
+          bank,
         },
         'User bank',
         'User bank successfully retrieved.',
       );
     } catch (err) {
-      return error(
-        'User bank',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async updateBank(id: string, updateBankDto: UpdateBankDto) {
     try {
-
-      return success(
-        {
-
-        },
-        'Login',
-        'User successfully logged in',
-      );
+      return success({}, 'Login', 'User successfully logged in');
     } catch (err) {
-      return error(
-        'Login',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async deleteBank(id: string) {
-
     try {
-      const banks = await this.bankModel.findByIdAndDelete(id)
+      const banks = await this.bankModel.findByIdAndDelete(id);
       return success(
         {
-          banks
+          banks,
         },
         'Delete bank',
         'Bank successfully deleted.',
       );
     } catch (err) {
-      return error(
-        'Delete bank',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async resetTransactionPin(id: string, resetPinDto: ResetPinDto) {
     try {
-      const { newPin } = resetPinDto
-      const foundPin = await this.pinModel.findOne({ owner: new Types.ObjectId(id) })
+      const { newPin } = resetPinDto;
+      const foundPin = await this.pinModel.findOne({
+        owner: new Types.ObjectId(id),
+      });
       if (!foundPin) {
-        return error(
-          'User pin',
+        throw new BadRequestException(
           `Please complete the KYC process to create a pin.`,
         );
       }
-      foundPin.pin = newPin
+      foundPin.pin = newPin;
 
-      foundPin.save()
-      return success(
-        {},
-        'Reset pin',
-        'User pin successfully reset.',
-      );
+      foundPin.save();
+      return success({}, 'Reset pin', 'User pin successfully reset.');
     } catch (err) {
-      return error(
-        'User pin',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
   async getWalletBalance(id: string) {
     try {
-      const walletBalance = await this.walletModel.findOne({ owner: new Types.ObjectId(id) })
+      const walletBalance = await this.walletModel.findOne({
+        owner: new Types.ObjectId(id),
+      });
       if (!walletBalance) {
-        return error(
-          'Wallet',
-          `No waalet found for this account.`,
-        );
+        throw new NotFoundException(`No wallet found for this account.`);
       }
       return success(
         {
-          data: walletBalance
+          data: walletBalance,
         },
         'Wallet',
         'Wallet successfully retrieved.',
       );
     } catch (err) {
-      return error(
-        'Wallet',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
   async fundWallet(id: string) {
     try {
-      const wallet = await this.walletModel.findById(id).populate<{ owner: any }>('owner').exec()
+      const wallet = await this.walletModel
+        .findById(id)
+        .populate<{ owner: any }>('owner')
+        .exec();
       if (!wallet) {
-        return error(
-          'Fund Wallet',
-          `Wallet details not found.`,
-        );
+        throw new NotFoundException(`Wallet details not found.`);
       }
-      const reference = generateReference('123456789')
+      const reference = generateReference('123456789');
 
       return success(
         {
-          reference
+          reference,
         },
         'Fund wallet',
         'Fund wallet initiated.',
       );
     } catch (err) {
-      return error(
-        'Fund wallet',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async verifyTransaction(id: string, referenceKey: string) {
     try {
-      const wallet = await this.walletModel.findById(id).populate<{ owner: any }>('owner').exec()
+      const wallet = await this.walletModel
+        .findById(id)
+        .populate<{ owner: any }>('owner')
+        .exec();
       if (!wallet) {
-        return error(
-          'Fund Wallet',
-          `Wallet details not found.`,
-        );
+        throw new NotFoundException(`Wallet details not found.`);
       }
       const response = await axios.get(
         `https://api.paystack.co/transaction/verify/:${referenceKey}`,
         {
           headers: {
-            'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        }
+            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        },
       );
 
       if (response.data.status) {
+        const totalAmount = Number(response.data.amount) / 100;
 
-        const totalAmount = (Number(response.data.amount) / 100)
-
-        const newBal = Number(wallet?.balance) + Number(totalAmount)
+        const newBal = Number(wallet?.balance) + Number(totalAmount);
         await this.walletModel.findByIdAndUpdate(
           wallet?._id,
           {
             $set: {
-              balance: newBal
-            }
+              balance: newBal,
+            },
           },
-          { new: true }
+          { new: true },
         );
         await this.transactionsModel.create({
           type: 'wallet',
@@ -309,18 +299,18 @@ export class UserService {
           reason: 'Fund wallet',
           status: response.data.status,
           wallet: wallet._id,
-          owner: wallet.owner._id
+          owner: wallet.owner._id,
         });
 
         return success(
           {
             ...response.data,
-            referenceKey
+            referenceKey,
           },
           'Fund wallet',
           'Wallet funded successfully.',
         );
-      }else{
+      } else {
         await this.transactionsModel.create({
           type: 'wallet',
           transactionReference: referenceKey,
@@ -328,46 +318,36 @@ export class UserService {
           reason: 'Fund wallet',
           status: response.data.status,
           wallet: wallet._id,
-          owner: wallet.owner._id
+          owner: wallet.owner._id,
         });
 
-        return success(
-          {
-            ...response,
-            referenceKey
-          },
-          'Fund wallet',
-          'Wallet funding failed.',
-        );
+        throw new UnprocessableEntityException('Wallet funding failed.');
       }
     } catch (err) {
-      return error(
-        'Fund wallet',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async walletWithdraw(id: string, walletWithdrawDto: WalletWithdrawDto) {
     try {
-      const wallet = await this.walletModel.findById(id)
-      const totalAmount = Number(walletWithdrawDto.amount) < 5000 ? Number(walletWithdrawDto.amount) + 100 : Number(walletWithdrawDto.amount) + 150
+      const wallet = await this.walletModel.findById(id);
+      const totalAmount =
+        Number(walletWithdrawDto.amount) < 5000
+          ? Number(walletWithdrawDto.amount) + 100
+          : Number(walletWithdrawDto.amount) + 150;
       if (Number(wallet.balance) < Number(totalAmount)) {
-        return error(
-          'Withdrawal',
-          `Insufficient balance for withdrawal.`,
-        );
+        throw new BadRequestException(`Insufficient balance for withdrawal.`);
       }
       const recipient = await createRecipient({
         accountName: walletWithdrawDto.accountName,
         accountNumber: walletWithdrawDto.accountNumber,
-        bankCode: walletWithdrawDto.bankCode
+        bankCode: walletWithdrawDto.bankCode,
       });
 
       const transfer = await initiateTransfer({
         amount: walletWithdrawDto.amount,
         recipientCode: recipient.recipient_code,
-        reason: walletWithdrawDto.reason
+        reason: walletWithdrawDto.reason,
       });
       await this.transactionsModel.create({
         type: 'wallet',
@@ -375,217 +355,188 @@ export class UserService {
         amount: transfer.amount,
         reason: walletWithdrawDto.reason || 'withdrawal',
         status: transfer.status,
-        wallet: id
+        wallet: id,
       });
       return success(
         {
           success: true,
           transferCode: transfer.transfer_code,
           reference: transfer.reference,
-          status: transfer.status
+          status: transfer.status,
         },
         'Withdrawal',
         'Withdrawal successfully',
       );
     } catch (err) {
-      return error(
-        'Withdrawal',
-        `${err.response?.data?.message || err.message}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
-
   async createNameTag(id: string, tagDto: TagDto) {
     try {
-      const { tag } = tagDto
-      const existingTag = await this.nameTagModel.findOne({ auth: id })
+      const { tag } = tagDto;
+      const existingTag = await this.nameTagModel.findOne({ auth: id });
       if (existingTag) {
-        return error(
-          'Tag',
-          `User name tag already exist.`,
-        );
+        throw new ConflictException(`User name tag already exist.`);
       }
-      const user = await this.userModel.findOne({ auth: new Types.ObjectId(id) })
+      const user = await this.userModel.findOne({
+        auth: new Types.ObjectId(id),
+      });
 
       const createdTag = await this.nameTagModel.create({
         tag: tag.toLowerCase(),
         user: user ? user._id : null,
-        auth: id
+        auth: id,
       });
       return success(
         {
           success: true,
-          tag: createdTag
+          tag: createdTag,
         },
         'Tag',
         'Tag successfully created.',
       );
     } catch (err) {
-      return error(
-        'Tag',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async getNameTag(id: string) {
     try {
-      const tag = await this.nameTagModel.findOne({ auth: id }).populate<{ user: User }>("user").populate<{ auth: Auth }>("auth").exec()
+      const tag = await this.nameTagModel
+        .findOne({ auth: id })
+        .populate<{ user: User }>('user')
+        .populate<{ auth: Auth }>('auth')
+        .exec();
       if (!tag) {
-        return error(
-          'Tag',
-          `User name tag not found.`,
-        );
+        throw new NotFoundException(`User name tag not found.`);
       }
 
       return success(
         {
           success: true,
-          tag
+          tag,
         },
         'Tag',
         'Tag successfully retrieved.',
       );
     } catch (err) {
-      return error(
-        'Tag',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async validateNameTag(tagDto: TagDto) {
     try {
-      const tags = await this.nameTagModel.find({ tag: tagDto.tag.toLowerCase() })
+      const tags = await this.nameTagModel.find({
+        tag: tagDto.tag.toLowerCase(),
+      });
       if (tags?.length) {
-        return error(
-          'Tag',
-          `Tag not available.`,
-        );
+        throw new ConflictException(`Tag not available.`);
       }
 
       return success(
         {
           success: true,
-          tag: tagDto.tag
+          tag: tagDto.tag,
         },
         'Tag',
         'Tag available.',
       );
     } catch (err) {
-      return error(
-        'Tag',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async verifyNameTag(tagDto: TagDto) {
     try {
-      const tag = await this.nameTagModel.findOne({ tag: tagDto.tag.toLowerCase() }).populate<{ user: User }>("user")
+      const tag = await this.nameTagModel
+        .findOne({ tag: tagDto.tag.toLowerCase() })
+        .populate<{ user: User }>('user');
       if (!tag) {
-        return error(
-          'Tag',
-          `Tag not available.`,
-        );
+        throw new ConflictException(`Tag not available.`);
       }
 
       return success(
         {
           success: true,
-          tag: tagDto.tag
+          tag: tagDto.tag,
         },
         'Tag',
         'Tag available.',
       );
     } catch (err) {
-      return error(
-        'Tag',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
   }
 
   async sendInvite(id: string, inviteDto: InviteDto) {
     try {
-      const { email } = inviteDto
-      const auth = await this.authModel.findOne({ email })
+      const { email } = inviteDto;
+      const auth = await this.authModel.findOne({ email });
       if (auth) {
-        return error(
-          'Invite',
+        throw new ConflictException(
           `An account with provided email already exist, please provide user tag.`,
         );
       }
 
-      const user = await this.userModel.findOne({ auth: id })
+      const user = await this.userModel.findOne({ auth: id });
 
       if (!user) {
-        return error(
-          'Invite',
+        throw new BadRequestException(
           `Please update your KYC before sending an invite.`,
         );
       }
 
-      const password = randomAlphanumeric()
+      const password = randomAlphanumeric();
 
-      const hashedPassword = hash(password)
+      const hashedPassword = hash(password);
 
       const newUser = await this.authModel.create({
         email,
         password: hashedPassword,
-        isVerified: true
-      })
+        isVerified: true,
+      });
 
       await this.walletModel.create({
-        balance: "0",
-        owner: newUser._id
-      })
+        balance: '0',
+        owner: newUser._id,
+      });
 
-      const tag = randomAlphanumeric(6)
+      const tag = randomAlphanumeric(6);
 
       await this.nameTagModel.create({
         tag: tag.toLowerCase(),
-        auth: newUser._id
+        auth: newUser._id,
       });
 
       const msg = await getTemplate(
         'invite',
         {
           to: email,
-          subject: "Trade invite",
+          subject: 'Trade invite',
           name: `${email.split('@')[0]}`,
           password,
           tag,
-          user: user?.fullName
+          user: user?.fullName,
         },
         {
           escape: (html: any) => {
-            return String(html)
-          }
-        }
-      )
-
-      await this.emailService.sendMail(
-        [email],
-        'Trade Invite',
-        msg
+            return String(html);
+          },
+        },
       );
+
+      await this.emailService.sendMail([email], 'Trade Invite', msg);
 
       return success(
         {
-          tag
+          tag,
         },
         'Trade invite',
         'Invite sent successfully.',
       );
-
     } catch (err) {
-      return error(
-        'Trade invite',
-        `${err}`,
-      );
+      throw new BadRequestException(err.message);
     }
-
   }
 }

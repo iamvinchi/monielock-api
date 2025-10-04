@@ -15,7 +15,6 @@ import { BadRequestException } from '@nestjs/common';
 import { isEmail, isNumberString } from 'class-validator';
 import { randomBytes } from 'crypto';
 
-
 export const randomDigits = (length = 5) => {
   return Math.random().toString().substr(2, length);
 };
@@ -25,18 +24,18 @@ export const random = (length = 8) => {
 };
 
 export const randomAlphanumeric = (length = 10) => {
-  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const charset =
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
   const charsetLength = charset.length;
 
   for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charsetLength);
-      result += charset[randomIndex];
+    const randomIndex = Math.floor(Math.random() * charsetLength);
+    result += charset[randomIndex];
   }
 
   return result;
-}
-
+};
 
 export const environment = process.env.NODE_ENV;
 export const isProduction = environment === 'production';
@@ -176,16 +175,12 @@ export const trimString = (characters: string, replaceWith = '') => {
   return characters.replace(/^\//, replaceWith).replace(/\/$/, replaceWith);
 };
 
-
-
 export const mask = (val: string, use = '*') => {
   if (!val) {
     return null;
   }
   return '*******';
 };
-
-
 
 export const prettyTimeLeft = (ms: number) => {
   if (!ms || ms < 0 || ms <= 1000 * 60) {
