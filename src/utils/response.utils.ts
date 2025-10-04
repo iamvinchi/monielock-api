@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from "@nestjs/common";
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 export const response = (
   title: string,
@@ -16,19 +16,28 @@ export const response = (
   };
 };
 
-export const success = (data: any, title?: string, message?: string, meta?: any) => {
-  const msg={
-    message:message,
-    status:true
-  }
+export const success = (
+  data: any,
+  title?: string,
+  message?: string,
+  meta?: any,
+) => {
+  const msg = {
+    message: message,
+    status: true,
+  };
   return response(title, msg, HttpStatus.OK, data, meta);
 };
 
-export const error = (title: string, message: string, code = HttpStatus.BAD_REQUEST) => {
-  const msg={
-    message:message,
-    status:false
-  }
-  return response( title, msg, code, null);
+export const error = (
+  title: string,
+  message: string,
+  code = HttpStatus.BAD_REQUEST,
+) => {
+  const msg = {
+    message: message,
+    status: false,
+  };
+  return response(title, msg, code, null);
   // throw new HttpException(res, code);
 };
