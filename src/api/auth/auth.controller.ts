@@ -1,9 +1,17 @@
 import { Body, Controller, Param, Patch, Post, Request } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { ChangePasswordDto, CreateAuthDto, ForgotPasswordDto, LoginDto, RefreshTokenDto, ResendCodeDto, ResetPasswordDto, ValidateEmailDto } from './dto/auth.dto';
+import {
+  ChangePasswordDto,
+  CreateAuthDto,
+  ForgotPasswordDto,
+  LoginDto,
+  RefreshTokenDto,
+  ResendCodeDto,
+  ResetPasswordDto,
+  ValidateEmailDto,
+} from './dto/auth.dto';
 import { UseAuthGuard } from 'src/utils/jwt/useAuth.guard';
-
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -21,12 +29,12 @@ export class AuthController {
   }
 
   @Post('verify')
-  validateEmail(@Body() emailValidation:ValidateEmailDto) {
+  validateEmail(@Body() emailValidation: ValidateEmailDto) {
     return this.authService.validateEmail(emailValidation);
   }
 
   @Post('resend-code')
-  resendCode(@Body() resendCodeDto:ResendCodeDto) {
+  resendCode(@Body() resendCodeDto: ResendCodeDto) {
     return this.authService.resendCode(resendCodeDto);
   }
 
@@ -37,8 +45,11 @@ export class AuthController {
 
   @Post('change-password')
   @UseAuthGuard()
-  changePassword(@Request() req:any, @Body() changePasswordDto: ChangePasswordDto) {
-    const id = req.user.sub
+  changePassword(
+    @Request() req: any,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    const id = req.user.sub;
     return this.authService.changePassword(id, changePasswordDto);
   }
 
@@ -51,6 +62,4 @@ export class AuthController {
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
   }
-
 }
-
