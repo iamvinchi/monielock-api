@@ -161,6 +161,14 @@ export class UserService {
     }
   }
 
+  async getListOfBanks() {
+    try {
+      return getAllBanks();
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
   async getSingleBank(id: string) {
     try {
       const bank = (await this.bankModel.findById(id)) || null;
