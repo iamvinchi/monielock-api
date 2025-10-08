@@ -106,13 +106,13 @@ export class UserService {
 
   async profile(id: string) {
     try {
-      let user;
-      user = await this.userModel
-        .findOne({ where: { auth: { _id: id } } })
-        .populate('auth');
-      if (!user) {
-        user = await this.authModel.findById(id);
-      }
+      const user = await this.userModel
+        .findOne({ auth: new Types.ObjectId(id) })
+        .select('fullName address createdAt')
+        .populate({
+          path: 'auth',
+          select: 'email phone isVerified',
+        });
 
       return success(user, 'Profile', 'User Profile retrieved');
     } catch (err) {
