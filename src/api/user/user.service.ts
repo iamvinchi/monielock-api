@@ -106,7 +106,15 @@ export class UserService {
 
   async profile(id: string) {
     try {
-      return success({}, 'Login', 'User successfully logged in');
+      let user;
+      user = await this.userModel
+        .findOne({ where: { auth: { _id: id } } })
+        .populate('auth');
+      if (!user) {
+        user = await this.authModel.findById(id);
+      }
+
+      return success(user, 'Profile', 'User Profile retrieved');
     } catch (err) {
       throw new BadRequestException(err.message);
     }

@@ -5,7 +5,6 @@ export type AuthDocument = Auth & Document;
 
 @Schema()
 export class Auth {
-
   @Prop({ required: true, unique: true })
   email: string;
 
@@ -18,16 +17,16 @@ export class Auth {
   @Prop({ default: false })
   isVerified: boolean;
 
-  @Prop({required:false})
+  @Prop({ required: false })
   verificationCode: string;
 
-  @Prop({required:false})
+  @Prop({ required: false })
   codeExpires: Date;
 
-  @Prop({required:false})
-  resetPasswordToken: string
+  @Prop({ required: false })
+  resetPasswordToken: string;
 
-  @Prop({required:false})
+  @Prop({ required: false })
   resetPasswordTokenExpires: Date;
 
   @Prop({ default: Date.now })
