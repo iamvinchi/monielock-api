@@ -236,10 +236,10 @@ export class UserService {
   }
   async getWalletBalance(id: string) {
     try {
-      const walletBalance = await this.walletModel.findOne({
+      const walletBalance = await this.walletModel.find({
         owner: new Types.ObjectId(id),
       });
-      if (!walletBalance) {
+      if (!walletBalance.length) {
         throw new NotFoundException(`No wallet found for this account.`);
       }
       return success(
