@@ -508,6 +508,7 @@ export class UserService {
 
   async updateNameTag(id: string, tagDto: TagDto) {
     try {
+      const normalizedTag = tagDto.tag.trim().toLowerCase();
       const tag = await this.nameTagModel.findOne({
         auth: id,
       });
@@ -518,13 +519,13 @@ export class UserService {
 
       await this.nameTagModel.findByIdAndUpdate(
         { _id: tag._id },
-        { tag: tagDto.tag },
+        { tag: normalizedTag },
       );
 
       return success(
         {
           success: true,
-          username: tagDto.tag,
+          username: normalizedTag,
         },
         'Username',
         'Username updated.',
