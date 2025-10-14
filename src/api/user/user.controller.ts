@@ -129,14 +129,21 @@ export class UserController {
     return this.userService.getNameTag(id);
   }
 
-  @Patch('tage/validate')
+  @Patch('tag/validate')
   validateNameTag(@Body() tagDto: TagDto) {
     return this.userService.validateNameTag(tagDto);
   }
 
-  @Patch('tage/verify')
+  @Patch('tag/verify')
   verifyNameTag(@Body() tagDto: TagDto) {
     return this.userService.verifyNameTag(tagDto);
+  }
+
+  @Patch('tag/update')
+  @UseAuthGuard()
+  updateNameTag(@Request() req: any, @Body() tagDto: TagDto) {
+    const id = req.user.sub;
+    return this.userService.updateNameTag(id, tagDto);
   }
 
   @Post('invite')

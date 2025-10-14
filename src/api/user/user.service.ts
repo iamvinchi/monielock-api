@@ -41,6 +41,7 @@ import { randomAlphanumeric, randomDigits } from 'src/utils/common.util';
 import { hash } from 'src/utils/security.utils';
 import { getTemplate } from 'src/utils/get-templates';
 import { EmailService } from 'src/utils/helper.services/email.service';
+import { Type } from 'class-transformer';
 
 @Injectable()
 export class UserService {
@@ -106,13 +107,20 @@ export class UserService {
 
   async profile(id: string) {
     try {
-      const user = await this.userModel
-        .findOne({ auth: new Types.ObjectId(id) })
-        .select('fullName address createdAt')
-        .populate({
-          path: 'auth',
-          select: 'email phone isVerified',
-        });
+      const [userData, tag] = await Promise.resolve([
+        await this.userModel
+          .findOne({ auth: new Types.ObjectId(id) })
+          .select('fullName address createdAt')
+          .populate({
+            path: 'auth',
+            select: 'email phone isVerified',
+          }),
+        await this.nameTagModel.findOne({
+          auth: id,
+        }),
+      ]);
+
+      const user = { userData, userName: tag?.tag };
 
       return success(user, 'Profile', 'User Profile retrieved');
     } catch (err) {
@@ -391,29 +399,42 @@ export class UserService {
   async createNameTag(id: string, tagDto: TagDto) {
     try {
       const { tag } = tagDto;
-      const existingTag = await this.nameTagModel.findOne({ auth: id });
+      const normalizedTag = tag.trim().toLowerCase();
+
+      const existingTag = await this.nameTagModel.findOne({
+        tag: normalizedTag,
+      });
       if (existingTag) {
-        throw new ConflictException(`User name tag already exist.`);
+        throw new ConflictException(
+          `The username "${normalizedTag}" is already taken.`,
+        );
       }
+
+      const userExistingTag = await this.nameTagModel.findOne({ auth: id });
+      if (userExistingTag) {
+        throw new ConflictException(`You already have a username assigned.`);
+      }
+
       const user = await this.userModel.findOne({
         auth: new Types.ObjectId(id),
       });
 
       const createdTag = await this.nameTagModel.create({
-        tag: tag.toLowerCase(),
+        tag: normalizedTag,
         user: user ? user._id : null,
         auth: id,
       });
+
       return success(
         {
           success: true,
           tag: createdTag,
         },
-        'Tag',
-        'Tag successfully created.',
+        'Username',
+        'Username successfully created.',
       );
     } catch (err) {
-      throw new BadRequestException(err.message);
+      throw new BadRequestException(err.message || err);
     }
   }
 
@@ -479,6 +500,34 @@ export class UserService {
         },
         'Tag',
         'Tag available.',
+      );
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  async updateNameTag(id: string, tagDto: TagDto) {
+    try {
+      const tag = await this.nameTagModel.findOne({
+        auth: id,
+      });
+
+      if (!tag) {
+        throw new NotFoundException(`Username not found`);
+      }
+
+      await this.nameTagModel.findByIdAndUpdate(
+        { _id: tag._id },
+        { tag: tagDto.tag },
+      );
+
+      return success(
+        {
+          success: true,
+          username: tagDto.tag,
+        },
+        'Username',
+        'Username updated.',
       );
     } catch (err) {
       throw new BadRequestException(err.message);
