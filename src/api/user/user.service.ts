@@ -108,14 +108,14 @@ export class UserService {
   async profile(id: string) {
     try {
       const [userData, tag] = await Promise.resolve([
-        this.userModel
+        await this.userModel
           .findOne({ auth: new Types.ObjectId(id) })
           .select('fullName address createdAt')
           .populate({
             path: 'auth',
             select: 'email phone isVerified',
           }),
-        this.nameTagModel.findOne({
+        await this.nameTagModel.findOne({
           auth: id,
         }),
       ]);
